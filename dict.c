@@ -212,6 +212,7 @@ int dictExpand(dict *d, unsigned long size)
         return DICT_ERR;
 
     /* Rehashing to the same table size is not useful. */
+    // 此时说明dittb已经到最大的容量了
     if (realsize == d->ht[0].size) return DICT_ERR;
 
     /* Allocate the new hash table and initialize all pointers to NULL */
@@ -242,6 +243,7 @@ int dictExpand(dict *d, unsigned long size)
  * guaranteed that this function will rehash even a single bucket, since it
  * will visit at max N*10 empty buckets in total, otherwise the amount of
  * work it does would be unbound and the function may block for a long time. */
+// 渐进式哈希
 int dictRehash(dict *d, int n) {
     int empty_visits = n*10; /* Max number of empty buckets to visit. */
     if (!dictIsRehashing(d)) return 0;
@@ -263,6 +265,7 @@ int dictRehash(dict *d, int n) {
 
             nextde = de->next;
             /* Get the index in the new hash table */
+            // 一个entry下的元素在rehash的时候会反转
             h = dictHashKey(d, de->key) & d->ht[1].sizemask;
             de->next = d->ht[1].table[h];
             d->ht[1].table[h] = de;
@@ -295,6 +298,7 @@ long long timeInMilliseconds(void) {
 }
 
 /* Rehash for an amount of time between ms milliseconds and ms+1 milliseconds */
+// 在ms的时间内进行渐进rehash
 int dictRehashMilliseconds(dict *d, int ms) {
     long long start = timeInMilliseconds();
     int rehashes = 0;
@@ -349,6 +353,7 @@ dictEntry *dictAddRaw(dict *d, void *key)
     dictEntry *entry;
     dictht *ht;
 
+    // 在添加entry的时候进行一次rehash
     if (dictIsRehashing(d)) _dictRehashStep(d);
 
     /* Get the index of the new element, or -1 if
@@ -359,6 +364,7 @@ dictEntry *dictAddRaw(dict *d, void *key)
     /* Allocate the memory and store the new entry */
     ht = dictIsRehashing(d) ? &d->ht[1] : &d->ht[0];
     entry = zmalloc(sizeof(*entry));
+    // 新entry插入到桶头
     entry->next = ht->table[index];
     ht->table[index] = entry;
     ht->used++;
@@ -413,6 +419,7 @@ static int dictGenericDelete(dict *d, const void *key, int nofree)
     int table;
 
     if (d->ht[0].size == 0) return DICT_ERR; /* d->ht[0].table is NULL */
+    // 进行一次rehash
     if (dictIsRehashing(d)) _dictRehashStep(d);
     h = dictHashKey(d, key);
 
@@ -492,6 +499,7 @@ dictEntry *dictFind(dict *d, const void *key)
     unsigned int h, idx, table;
 
     if (d->ht[0].size == 0) return NULL; /* We don't have a table at all */
+    // 进行一次渐进rehash
     if (dictIsRehashing(d)) _dictRehashStep(d);
     h = dictHashKey(d, key);
     for (table = 0; table <= 1; table++) {
@@ -502,6 +510,7 @@ dictEntry *dictFind(dict *d, const void *key)
                 return he;
             he = he->next;
         }
+        // 如果没有rehash，就不需要for循环的第二次了，直接跳出
         if (!dictIsRehashing(d)) return NULL;
     }
     return NULL;
@@ -520,6 +529,7 @@ void *dictFetchValue(dict *d, const void *key) {
  * the fingerprint again when the iterator is released.
  * If the two fingerprints are different it means that the user of the iterator
  * performed forbidden operations against the dictionary while iterating. */
+// 使用fingerprint阻止字典的iterator中存在不允许的操作，比如线程不安全
 long long dictFingerprint(dict *d) {
     long long integers[6], hash = 0;
     int j;
@@ -613,6 +623,7 @@ void dictReleaseIterator(dictIterator *iter)
         if (iter->safe)
             iter->d->iterators--;
         else
+            // 不安全时，如果fingerprint不一致说明有人更改了，报错
             assert(iter->fingerprint == dictFingerprint(iter->d));
     }
     zfree(iter);
@@ -752,6 +763,7 @@ unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count) {
 
 /* Function to reverse bits. Algorithm from:
  * http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel */
+// 11110000 -> 00001111
 static unsigned long rev(unsigned long v) {
     unsigned long s = 8 * sizeof(v); // bit size; must be power of 2
     unsigned long mask = ~0;
@@ -947,6 +959,7 @@ static unsigned long _dictNextPower(unsigned long size)
     unsigned long i = DICT_HT_INITIAL_SIZE;
 
     if (size >= LONG_MAX) return LONG_MAX;
+    // 进行对齐，始终是2的倍数
     while(1) {
         if (i >= size)
             return i;
@@ -960,6 +973,7 @@ static unsigned long _dictNextPower(unsigned long size)
  *
  * Note that if we are in the process of rehashing the hash table, the
  * index is always returned in the context of the second (new) hash table. */
+// 如果正在rehash，直接返回在新hashtb的index
 static int _dictKeyIndex(dict *d, const void *key)
 {
     unsigned int h, idx, table;
