@@ -580,6 +580,7 @@ struct sharedObjectsStruct {
 };
 
 /* ZSETs use a specialized version of Skiplists */
+// 跳表的节点
 typedef struct zskiplistNode {
     robj *obj;
     double score;
@@ -590,6 +591,7 @@ typedef struct zskiplistNode {
     } level[];
 } zskiplistNode;
 
+// 跳表
 typedef struct zskiplist {
     struct zskiplistNode *header, *tail;
     unsigned long length;

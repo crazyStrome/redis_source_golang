@@ -85,6 +85,7 @@ void zslFreeNode(zskiplistNode *node) {
 }
 
 void zslFree(zskiplist *zsl) {
+    // 获取level 0的最开始节点
     zskiplistNode *node = zsl->header->level[0].forward, *next;
 
     zfree(zsl->header);
@@ -102,6 +103,7 @@ void zslFree(zskiplist *zsl) {
  * levels are less likely to be returned. */
 int zslRandomLevel(void) {
     int level = 1;
+    // 上一层是下一层概率的1/4
     while ((random()&0xFFFF) < (ZSKIPLIST_P * 0xFFFF))
         level += 1;
     return (level<ZSKIPLIST_MAXLEVEL) ? level : ZSKIPLIST_MAXLEVEL;
@@ -116,7 +118,9 @@ zskiplistNode *zslInsert(zskiplist *zsl, double score, robj *obj) {
     x = zsl->header;
     for (i = zsl->level-1; i >= 0; i--) {
         /* store rank that is crossed to reach the insert position */
+        // 最高层的rank是0，其余的rank是上一层的rank值
         rank[i] = i == (zsl->level-1) ? 0 : rank[i+1];
+        // 按照score和obj从小到大排列
         while (x->level[i].forward &&
             (x->level[i].forward->score < score ||
                 (x->level[i].forward->score == score &&
@@ -171,6 +175,7 @@ void zslDeleteNode(zskiplist *zsl, zskiplistNode *x, zskiplistNode **update) {
             update[i]->level[i].span += x->level[i].span - 1;
             update[i]->level[i].forward = x->level[i].forward;
         } else {
+            // x的level比当前level i要小
             update[i]->level[i].span -= 1;
         }
     }
