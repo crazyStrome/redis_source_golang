@@ -78,6 +78,7 @@ typedef struct dictht {
 typedef struct dict {
     dictType *type;
     void *privdata;
+    // 两个hashtable用于rehash，一个是新的一个是旧的
     dictht ht[2];
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
     int iterators; /* number of iterators currently running */
