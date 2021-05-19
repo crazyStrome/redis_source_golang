@@ -19,7 +19,8 @@ redis代码阅读顺序参考[如何阅读redis源码-知乎](https://www.zhihu.
 
 * [skiplist golang实现](./golang/图解并实现golang版skiplist.md)
 * [hyperloglog redis 原理](./golang/hyperLogLog原理.md)
-* [hyperLogLog原理 html版](hyperLogLog原理.html)
+* [hyperLogLog原理 html版](./golang/hyperLogLog原理.html)
+* [hyperloglog golang实现](./golang/hyperloglog_golang.md)
 
 
 
