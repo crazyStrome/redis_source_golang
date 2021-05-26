@@ -12,7 +12,7 @@ redis代码阅读顺序参考[如何阅读redis源码-知乎](https://www.zhihu.
 * 字典[dict.h](./dict.h)和[dict.c](./dict.c)
 * 跳跃表[redis.h](./redis.h)文件里面关于zskiplist结构和zskiplistNode结构，以及[t_zset.c](./t_zset.c)中所有zsl开头的函数，比如 zslCreate、zslInsert、zslDeleteNode等等
 * 基数统计[hyperloglog.c ](./hyperloglog.c )中的 hllhdr 结构， 以及所有以 hll 开头的函数
-
+* 集合intset，代码过于简单，建议直接阅读代码[intset.c](./intset.c)
 
 
 代码解析博客有：

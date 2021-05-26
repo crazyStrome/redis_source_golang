@@ -132,6 +132,7 @@ static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) {
         }
     }
 
+    // 二分法
     while(max >= min) {
         mid = ((unsigned int)min + (unsigned int)max) >> 1;
         cur = _intsetGet(is,mid);
@@ -148,6 +149,7 @@ static uint8_t intsetSearch(intset *is, int64_t value, uint32_t *pos) {
         if (pos) *pos = mid;
         return 1;
     } else {
+        // 如果没找到value，min就是value该插入的位置
         if (pos) *pos = min;
         return 0;
     }
@@ -171,6 +173,8 @@ static intset *intsetUpgradeAndAdd(intset *is, int64_t value) {
         _intsetSet(is,length+prepend,_intsetGetEncoded(is,length,curenc));
 
     /* Set the value at the beginning or the end. */
+    // 如果value是负数，放在开头
+    // 如果value是整数，放在结尾
     if (prepend)
         _intsetSet(is,0,value);
     else
@@ -178,7 +182,7 @@ static intset *intsetUpgradeAndAdd(intset *is, int64_t value) {
     is->length = intrev32ifbe(intrev32ifbe(is->length)+1);
     return is;
 }
-
+// 把from之后的数据向后移动到to位置
 static void intsetMoveTail(intset *is, uint32_t from, uint32_t to) {
     void *src, *dst;
     uint32_t bytes = intrev32ifbe(is->length)-from;
