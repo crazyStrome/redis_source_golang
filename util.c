@@ -319,21 +319,26 @@ int ll2string(char* dst, size_t dstlen, long long svalue) {
 /* Convert a string into a long long. Returns 1 if the string could be parsed
  * into a (non-overflowing) long long, 0 otherwise. The value will be set to
  * the parsed value when appropriate. */
+// 把string转换为long long型。如果可以转换则返回1
 int string2ll(const char *s, size_t slen, long long *value) {
     const char *p = s;
     size_t plen = 0;
     int negative = 0;
     unsigned long long v;
 
+    // s 的长度为 0，直接返回0
     if (plen == slen)
         return 0;
 
     /* Special case: first and only digit is 0. */
+    // 特殊情况，s长度为1，且内容只有'0'
+    // 直接设置value并返回1
     if (slen == 1 && p[0] == '0') {
         if (value != NULL) *value = 0;
         return 1;
     }
 
+    // 判断字符串表示的数字的正负性
     if (p[0] == '-') {
         negative = 1;
         p++; plen++;
@@ -344,6 +349,8 @@ int string2ll(const char *s, size_t slen, long long *value) {
     }
 
     /* First digit should be 1-9, otherwise the string should just be 0. */
+    // ziplist只储存整数，如果第一个数不是1-9
+    // 尽管它表示小数，例如0.1，也会将value设置为0
     if (p[0] >= '1' && p[0] <= '9') {
         v = p[0]-'0';
         p++; plen++;
@@ -354,7 +361,9 @@ int string2ll(const char *s, size_t slen, long long *value) {
         return 0;
     }
 
+    // 将string转为ull类型，如果溢出，则返回0
     while (plen < slen && p[0] >= '0' && p[0] <= '9') {
+        // 检查是否会溢出
         if (v > (ULLONG_MAX / 10)) /* Overflow. */
             return 0;
         v *= 10;
@@ -367,6 +376,7 @@ int string2ll(const char *s, size_t slen, long long *value) {
     }
 
     /* Return if not all bytes were used. */
+    // 如果string后续存在非数字字符，则直接返回0
     if (plen < slen)
         return 0;
 
